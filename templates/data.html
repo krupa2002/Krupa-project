@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data</title>
+</head>
+<body>
+    <h2>Data</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Sr No.</th>
+                <th>Date</th>
+                <th>Mood</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for index, row in mood_data.iterrows() %}
+            <tr>
+                <td>{{ index + 1 }}</td>
+                <!-- Split the date and time -->
+                {% set date_parts = row['Date'].split(': ') %}
+                <td>{{ date_parts[0] }}</td> <!-- Display only the date -->
+                <td>{{ date_parts[1] }}</td> <!-- Display the mood -->
+                
+                <td></td> <!-- Leave confession cell empty for mood data -->
+            </tr>
+            {% endfor %}
+           
+           
+            
+        </tbody>
+    </table>
+</body>
+</html>

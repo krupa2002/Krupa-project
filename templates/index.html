@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Tracker & Journal</title>
+</head>
+<body>
+    <h1>Welcome to the Mood Tracker & Journal!</h1>
+    <form action="{{ url_for('submit') }}" method="post">
+        <label for="mood">Enter your mood:</label>
+        <select id="mood" name="mood">
+            <option value="happy">Happy</option>
+            <option value="angry">Angry</option>
+            <option value="sad">Sad</option>
+            <option value="calm">Calm</option>
+            <option value="excited">Excited</option>
+            <option value="anxious">Anxious</option>
+            <option value="content">Content</option>
+            <option value="frustrated">Frustrated</option>
+            <option value="grateful">Grateful</option>
+            <option value="lonely">Lonely</option>
+        </select><br><br>
+        <label for="confession">Write your confession:</label><br>
+        <textarea id="confession" name="confession" rows="4" cols="50"></textarea><br><br>
+        <input type="submit" value="Submit">
+    </form>
+    <br>
+    <a href="/data"><button>View All Data</button></a>
+    <a href="/mood_chart"><button>View Mood Chart</button></a>
+    <a href="/journal.txt"><button>View Journal</button></a>
+</body>
+</html>
