@@ -1,72 +1,63 @@
-import datetime
-import pandas as pd
-import matplotlib.pyplot as plt
 from flask import Flask, render_template, request
-from flask import jsonify
+import plotly.graph_objs as go
+import datetime
 
 app = Flask(__name__)
 
-def record_mood(mood):
-    date = datetime.date.today().strftime("%Y-%m-%d")
-    with open("mood_tracker.txt", "a") as file:
-        file.write(f"{date}: {mood}\n")
+moods_data = {'Happy': [], 'Sad': [], 'Excited': [], 'Calm': [], 'Angry': [], 'Stressed': []}
+journal_entries = []
 
-def write_journal_entry(entry):
-    with open("journal.txt", "a") as file:
-        file.write(f"{entry}\n\n")
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        mood = request.form['mood']
+        moods_data[mood].append(datetime.datetime.now())
+        
+        journal_entry = request.form.get('journal_entry')
+        if journal_entry:
+            journal_entries.append((datetime.datetime.now(), mood, journal_entry))
+    
+    return render_template('index_dropdown.html')
 
+@app.route('/visualization')
+def visualization():
+    fig = go.Figure()
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+    mood_sequence = []
+    for mood, times in moods_data.items():
+        mood_transitions = [(time, mood) for time in times]
+        mood_transitions.sort()
+        mood_sequence.extend(mood_transitions)
 
-@app.route('/submit', methods=['POST'])
-def submit():
-    mood = request.form['mood']
-    confession = request.form['confession']
+    mood_sequence.sort()
 
-    record_mood(mood)
-    write_journal_entry(confession)
+    x_values = []
+    y_values = []
 
-    return render_template('success.html')
+    for i in range(len(mood_sequence)):
+        if i == 0:
+            x_values.append(mood_sequence[i][0])
+            y_values.append(mood_sequence[i][1])
+        else:
+            if mood_sequence[i][1] != mood_sequence[i-1][1]:
+                x_values.append(mood_sequence[i-1][0])
+                y_values.append(mood_sequence[i-1][1])
+                x_values.append(mood_sequence[i][0])
+                y_values.append(mood_sequence[i][1])
 
-@app.route('/journal.txt')
-def view_journal():
-    with open('journal.txt', 'r') as file:
-        journal_content = file.read()
-    return journal_content
+    fig.add_trace(go.Scatter(x=x_values, y=y_values, mode='lines+markers', name='Mood Transition'))
 
+    fig.update_layout(title='Mood Transition over Time',
+                      xaxis_title='Time',
+                      yaxis_title='Mood')
 
-@app.route('/data')
-def data():
-    # Read mood and confession data from files
-    mood_data = pd.read_csv("mood_tracker.txt", header=None, names=["Date", "Mood"])
-    confession_data = pd.read_csv("journal.txt", sep=":\n", header=None, names=["Confession"])
+    graphJSON = fig.to_json()
 
-    # Render the template with mood and confession data
-    return render_template('data.html', mood_data=mood_data, confession_data=confession_data)
+    return render_template('visualization_dropdown.html', graphJSON=graphJSON, journal_entries=journal_entries)
 
+@app.route('/journal')
+def journal():
+    return render_template('journal.html')
 
-@app.route('/mood_chart')
-def mood_chart():
-    mood_data = pd.read_csv("mood_tracker.txt", header=None, names=["Date", "Mood"])
-    mood_counts = mood_data['Mood'].value_counts()
-
-    # Create pie chart using Matplotlib
-    plt.figure(figsize=(1, 1))
-    plt.pie(mood_counts, labels=mood_counts.index, autopct='%1.1f%%')
-    plt.title('My Moods')
-    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
-    plt.tight_layout()
-
-    # Save the pie chart to a temporary file
-    chart_filename = 'static/mood_chart.png'
-    plt.savefig(chart_filename)
-
-    # Close the Matplotlib plot to free up memory
-    plt.close()
-
-    return render_template('mood_chart.html', chart_filename=chart_filename)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
